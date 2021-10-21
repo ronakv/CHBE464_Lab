@@ -11,7 +11,7 @@ from scipy.optimize import fsolve
 
 # Constants
 
-R = 8.314 # gas constant [P in kPa, volume in L]
+R = 8.314 # gas constant [Pressure in kPa, volume in L]
 
 # volume of the reactor - water - sand [L]
 
@@ -40,13 +40,13 @@ numPoints = time.size
 # Since we never reach a steady state. I estimate the pressure drop when the 
 # rate of pressure drop is lesser than 0.1 kPa/ 5 seconds (epsilon)
 
-epsilon_Pdrop = 0.1
+epsilon_Pdrop = 0.44/5
 
 temp_pressure = np.where(np.abs(dPdt) < epsilon_Pdrop, pressure, 0)
 
 # we only start searching for the steady state pressure after 5 * 100 seconds
 
-index = np.arange(100, numPoints+1)
+index = np.arange(1400, numPoints+1)
 
 # creating variables for when the system reaches steady state (ss)
 
@@ -71,7 +71,8 @@ pressureDrop = (max_pressure - ss_pressure) # kPa
 
 # using n = PV/R*T (ideal gas)
 
-molesHydrates_ideal =  pressureDrop * volume/(R * ss_temperature)
+molesHydrates_ideal_initial =  max_pressure * volume/(R * ss_temperature)
+molesHydrates_ideal_final =  ss_pressure * volume/(R * ss_temperature)
 
 # this function returns the difference between the pressure (steady state) and
 # the pressure calculated as a function of the moles of gas
@@ -121,7 +122,9 @@ def molesFromSRK_Error(moles, pressure, temperature):
     
     return error
 
-molesHydrates_SRK = fsolve(molesFromSRK_Error, molesHydrates_ideal, 
+molesHydrates_SRK = fsolve(molesFromSRK_Error, molesHydrates_ideal_initial, 
+                           (max_pressure, 4 + 273.15))[0] - fsolve(molesFromSRK_Error, 
+                           molesHydrates_ideal_final, 
                            (ss_pressure, ss_temperature))[0]
 
 
